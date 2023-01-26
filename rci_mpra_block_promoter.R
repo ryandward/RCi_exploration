@@ -36,8 +36,9 @@ rpoE_design <- data.frame(
 
 rpoE_block <- rpoE_data %>% 
 	colnames %>% `[`(rpoE_data %>% colnames %>% grepl("_", .)) %>% 
-	stringr::str_extract("(A|B|C|D)_[0-9]")
+	# stringr::str_extract("(A|B|C|D)_[0-9]")
 	# stringr::str_extract("[0-9]$")
+	stringr::str_extract("_(A|B|C|D)_") %>% gsub("_", "", .)
 
 rpoE_mpralm <- mpralm(
 	rpoE_MPRASet, 
@@ -64,12 +65,6 @@ rpoE_guide_results_raw <- topTable(rpoE_mpralm, coef = 2, number = Inf) %>%
 	data.table(keep.rownames = "promoter") %>% 
 	arrange(adj.P.Val) %>%
 	mutate(logFC = round(logFC, 3))
-
-rpoE_gene_results_raw <- rpoE_guide_results_raw %>% 
-	group_by(locus_tag, type) %>% 
-	summarise(
-		logFC = mean(logFC), 
-		FDR = handle_NA(adj.P.Val))
 
 rpoE_guide_results_raw %>% ggplot(aes(x = logFC, y = -log10(adj.P.Val))) + geom_point()
 
