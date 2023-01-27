@@ -15,7 +15,7 @@ rpoE_data <- lane_spread_spacers %>%
 	# mutate(random_offset = runif(nrow(.), min = 0, max = 20)) %>%
 	# mutate(count = count + random_offset) %>%
 	# mutate(count = case_when(count == 0 ~ NA_real_, TRUE ~ count)) %>%
-	filter(promoter == "rpoE") %>%
+	filter(promoter == "lolB") %>%
 	dcast(spacer + nucleotide ~ promoter + timing + replicate + lane, value.var = "count")
 
 # Create block set
@@ -68,5 +68,5 @@ rpoE_gene_results_raw <- rpoE_guide_results_raw %>%
 		logFC = mean(logFC), 
 		FDR = handle_NA(adj.P.Val))
 
-rpoE_guide_results_raw %>% ggplot(aes(x = logFC, y = -log10(adj.P.Val))) + geom_point()
+rpoE_gene_results_raw %>% ggplot(aes(x = logFC, y = -log10(FDR))) + geom_point()
 
