@@ -12,8 +12,8 @@ rpoE_data <- lane_spread_spacers %>%
 		variable.name = "spacer", value.name = "count") %>%
 	mutate(count = as.numeric(count)) %>%
 	mutate(count = case_when(count == 0 ~ NA_real_, TRUE ~ count)) %>%
-	filter(spacer == "TCTATGTGCCGTCGGGTGAT") %>%
-	dcast(promoter + nucleotide ~ spacer + timing + replicate + lane, value.var = "count")
+	filter(spacer == "TTTTAGAAAACACTTTGGTA") %>%
+	dcast(promoter + nucleotide ~ timing + replicate + lane, value.var = "count")
 
 # rpoE_data <- lane_spacers_norm_complete_DNA %>% 
 # 	mutate(nucleotide = "DNA") %>%
@@ -36,16 +36,16 @@ rpoE_design <- data.frame(
 
 rpoE_block <- rpoE_data %>% 
 	colnames %>% `[`(rpoE_data %>% colnames %>% grepl("_", .)) %>% 
-	# stringr::str_extract("(A|B|C|D)_[0-9]")
+	stringr::str_extract("(A|B|C|D)_[0-9]")
 	# stringr::str_extract("[0-9]$")
-	stringr::str_extract("_(A|B|C|D)_") %>% gsub("_", "", .)
+	# stringr::str_extract("_(A|B|C|D)_") %>% gsub("_", "", .)
 
 rpoE_mpralm <- mpralm(
 	rpoE_MPRASet, 
 	design = rpoE_design,
 	block = rpoE_block,
 	model_type = "corr_groups", 
-	aggregate = "sum")	
+	aggregate = "mean")	
 
 # Define function to handle missing values
 handle_NA <- function(x) {

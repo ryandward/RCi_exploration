@@ -4,13 +4,17 @@ gene_data <- fread("gene_to_b.tsv")
 # read raw data
 lane_spread_spacers <- fread("lane_spread_spacers.tsv.gz")
 
+
+
 # Reshape data
 rpoE_data <- lane_spread_spacers %>% 
 	melt(
 		id.vars = c("promoter", "timing", "replicate", "nucleotide", "lane"),
 		variable.name = "spacer", value.name = "count") %>%
-	mutate(count = as.numeric(count)) %>%
-	mutate(count = case_when(count == 0 ~ NA_real_, TRUE ~ count)) %>%
+	# mutate(count = as.numeric(count)) %>%
+	# mutate(random_offset = runif(nrow(.), min = 0, max = 20)) %>%
+	# mutate(count = count + random_offset) %>%
+	# mutate(count = case_when(count == 0 ~ NA_real_, TRUE ~ count)) %>%
 	filter(promoter == "rpoE") %>%
 	dcast(spacer + nucleotide ~ promoter + timing + replicate + lane, value.var = "count")
 
@@ -29,14 +33,14 @@ rpoE_design <- data.frame(
 
 rpoE_block <- rpoE_data %>% 
 	colnames %>% `[`(rpoE_data %>% colnames %>% grepl("_", .)) %>% 
-	stringr::str_extract("(A|B)_[0-9]")
+	stringr::str_extract("(A|B|C|D)_[0-9]")
 
 rpoE_mpralm <- mpralm(
 	rpoE_MPRASet, 
 	design = rpoE_design,
 	block = rpoE_block,
 	model_type = "corr_groups", 
-	aggregate = "sum")
+	aggregate = "mean")
 
 # Define function to handle missing values
 handle_NA <- function(x) {
