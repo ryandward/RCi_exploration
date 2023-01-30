@@ -7,7 +7,7 @@ lane_spread_spacers <- fread("lane_spread_spacers.tsv.gz")
 
 
 # Reshape data
-rpoE_data <- lane_spread_spacers %>% 
+promoter_data <- lane_spread_spacers %>% 
 	melt(
 		id.vars = c("promoter", "timing", "replicate", "nucleotide", "lane"),
 		variable.name = "spacer", value.name = "count") %>%
@@ -19,28 +19,29 @@ rpoE_data <- lane_spread_spacers %>%
 	dcast(spacer + nucleotide ~ promoter + timing + replicate + lane, value.var = "count")
 
 # Create block set
-rpoE_MPRASet <- MPRASet(
-	RNA = rpoE_data %>% filter(nucleotide == "RNA") %>% select(-spacer, -nucleotide),
-	DNA = rpoE_data %>% filter(nucleotide == "DNA") %>% select(-spacer, -nucleotide),
-	eid = rpoE_data %>% filter(nucleotide == "RNA") %>% pull(spacer) %>% as.character 
+promoter_MPRASet <- MPRASet(
+	RNA = promoter_data %>% filter(nucleotide == "RNA") %>% select(-spacer, -nucleotide),
+	DNA = promoter_data %>% filter(nucleotide == "DNA") %>% select(-spacer, -nucleotide),
+	eid = promoter_data %>% filter(nucleotide == "RNA") %>% pull(spacer) %>% as.character 
 )
 
-rpoE_design <- data.frame(
+promoter_design <- data.frame(
 	intcpt = 1, 
-	T2 = grepl("T2", colnames(rpoE_MPRASet))
+	T2 = grepl("T2", colnames(promoter_MPRASet))
 ) %>% 
-	set_rownames(colnames(rpoE_MPRASet))
+	set_rownames(colnames(promoter_MPRASet))
 
-rpoE_block <- rpoE_data %>% 
-	colnames %>% `[`(rpoE_data %>% colnames %>% grepl("_", .)) %>% 
+promoter_block <- promoter_data %>% 
+	colnames %>% `[`(promoter_data %>% colnames %>% grepl("_", .)) %>% 
 	stringr::str_extract("(A|B|C|D)_[0-9]")
 
-rpoE_mpralm <- mpralm(
-	rpoE_MPRASet, 
-	design = rpoE_design,
-	block = rpoE_block,
-	model_type = "corr_groups", 
-	aggregate = "mean")
+promoter_mpralm <- mpralm(
+	promoter_MPRASet, 
+	design = promoter_design,
+	block = promoter_block,
+	normalize = TRUE,
+	model_type = "indep_groups", 
+	aggregate = "none")
 
 # Define function to handle missing values
 handle_NA <- function(x) {
@@ -55,18 +56,15 @@ handle_NA <- function(x) {
 
 ##########################################################################################
 
-rpoE_guide_results_raw <- topTable(rpoE_mpralm, coef = 2, number = Inf) %>% 
+promoter_guide_results_raw <- topTable(promoter_mpralm, coef = 2, number = Inf) %>% 
 	data.table(keep.rownames = "spacer") %>% 
-	inner_join(guides) %>% 
-	arrange(adj.P.Val) %>% 
-	inner_join(gene_data, by = c("locus_tag" = "b_name")) 
+	inner_join(guides) 
 
-
-rpoE_gene_results_raw <- rpoE_guide_results_raw %>% 
+promoter_gene_results_raw <- promoter_guide_results_raw %>% 
 	group_by(locus_tag, type) %>% 
 	summarise(
 		logFC = mean(logFC), 
 		FDR = handle_NA(adj.P.Val))
 
-rpoE_gene_results_raw %>% ggplot(aes(x = logFC, y = -log10(FDR))) + geom_point()
+promoter_gene_results_raw %>% ggplot(aes(x = logFC, y = -log10(FDR))) + geom_point()
 
