@@ -1,26 +1,34 @@
+library(pacman)
+p_load(data.table, tidyverse, magrittr, mpra, pheatmap)
+
+# load the barcode_stats_norm data
+barcode_stats <- fread("barcode_stats.tsv")
+
+guides <- fread("oligo_guides.tsv")
+
+promoters <- unique(barcode_stats$promoter)
+
+promoters_interest <- c("j23119", "lacUV5", "acrAB", "bamE", "dapA", "hdeA", "letA", "lolB", "lptD", "marR", "micA", "mraZ", "pspA", "rcsA", "rpoE", "tolC", "waaQ", "ygiM") 
+
+promoters_interest <- promoters_interest %>% factor(levels = promoters_interest)
+
 spacer_stats_spread <- barcode_stats %>% 
-	filter(promoter %in% c("lacUV5", "j23119")) %>%
+	filter(promoter %in% promoters_interest) %>%
+	mutate(promoter = factor(promoter, levels = promoters_interest)) %>%
 	melt(id.vars = c("promoter", "spacer", "barcode", "nucleotide"), variable.name = "batch", value.name = "count") %>% 
 	group_by(promoter, spacer, nucleotide, batch) %>% summarise(count = sum(count)) %>% 
-	setDT %>% dcast(spacer + nucleotide ~ batch + promoter, value.var = "count", fill = 0) %>%
-	arrange("promoter", "nucleotide")
+	data.table %>% dcast(spacer + nucleotide ~ batch + promoter, value.var = "count") 
 
 spread_data_columns <- spacer_stats_spread %>% 
 	colnames %>% `[`(spacer_stats_spread %>% colnames %>% grepl("^T", .))
 
-spread_data_design <- data.frame(
-	intcpt = 1, 
-	T2 = grepl("T2", spread_data_columns),
-	lacUV5 = grepl("lacUV5", spread_data_columns),
-	acrAB = grepl("acrAB", spread_data_columns),
-	lptD = grepl("lptD", spread_data_columns)) %>%
-	set_rownames(spread_data_columns)
+design_promoters <- spread_data_columns %>% stringr::str_extract("[^_]+$")
 
-spread_data_design <- 
-	model.matrix(~  spread_data_design, data = spacer_stats_spread %>% data.table) %>%
-	set_rownames(spread_data_columns)
+design_timing    <- spread_data_columns %>% stringr::str_extract("^T[02]")
 
-
+spread_data_design <- model.matrix( ~ design_timing + design_promoters) %>% 
+	set_colnames(c("intercept", (design_timing %>% unique)[-1], (design_promoters %>% unique)[-1]))
+	
 spread_data_block <- spread_data_columns %>% stringr::str_extract("(A|B|C|D)_[0-9]")
 
 spread_data_MPRAset <- MPRASet(
@@ -32,8 +40,19 @@ spread_data_mpralm <- mpralm(
 	spread_data_MPRAset,
 	design = spread_data_design,
 	block = spread_data_block,
-	model_type = "indep_groups",
+	model_type = "corr_groups",
 	aggregate = "none",
 	plot = FALSE,
 	normalize = TRUE)
+
+
+### these are some data manipulation to get the results into a decent format
+
+results <- spread_data_mpralm %>% topTable(n = Inf) %>% data.table(keep.rownames = "spacer") %>% select(spacer, T2, all_of(promoters_interest[-1])) %>% inner_join(guides)
+
+# reshaped <- results %>% melt(id.vars = c("type", "gene", "locus_tag", "offset", "spacer"), variable.name = "promoter", value.name = "logFC") %>% group_by(type, gene, promoter) %>% summarise(mlogFC = mean(logFC)) %>% filter(type != "controls") %>% filter(type == "perfect") %>% ungroup %>% data.table %>% dcast(gene ~ promoter, value.var = "mlogFC")
+
+results_colnames <- spread_data_mpralm %>% topTable(n = Inf) %>% data.table() %>% colnames
+
+spread_data_mpralm %>% topTable(n = Inf, coef = "pspA") %>% data.table(keep.rownames = "spacer") %>% inner_join(guides) %>% group_by(gene, locus_tag, type) %>% summarise(mLFC = mean(logFC)) %>% ungroup() %>% filter(type == "perfect") %>% select(locus_tag, mLFC) %>% clipr::write_clip()
 
