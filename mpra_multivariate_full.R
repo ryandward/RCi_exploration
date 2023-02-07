@@ -16,16 +16,16 @@ promoters <- unique(barcode_stats$promoter)
 # Sort the list of promoter names by placing 'j23119' and 'lacUV5' at the beginning
 # and sorting the rest of the names in alphabetical order
 promoters <- c("j23119", "lacUV5", sort(setdiff(promoters, c("j23119", "lacUV5"))))
-
-data_summarize <- data %>% mutate(promoter = factor(promoter, levels = promoters)) %>% group_by(promoter, spacer, nucleotide, batch, timing) %>% summarise(count = sum(count))
-
-data_summarize <- data_summarize %>% data.table
-
-data_summarize[, batch := paste(timing, batch, sep = "_")]
-
-spacer_stats_spread <- data_summarize %>% data.table %>% dcast(spacer + nucleotide ~ batch + promoter, value.var = "count", fill = 0)
-
-spacer_stats_spread %>% fwrite("spacer_stats_spread_full.tsv.gz", sep = "\t")
+# 
+# data_summarize <- data %>% mutate(promoter = factor(promoter, levels = promoters)) %>% group_by(promoter, spacer, nucleotide, batch, timing) %>% summarise(count = sum(count))
+# 
+# data_summarize <- data_summarize %>% data.table
+# 
+# data_summarize[, batch := paste(timing, batch, sep = "_")]
+# 
+# spacer_stats_spread <- data_summarize %>% data.table %>% dcast(spacer + nucleotide ~ batch + promoter, value.var = "count", fill = 0)
+# 
+# spacer_stats_spread %>% fwrite("spacer_stats_spread_full.tsv.gz", sep = "\t")
 
 spacer_stats_spread <- fread("spacer_stats_spread_full.tsv.gz")
 
