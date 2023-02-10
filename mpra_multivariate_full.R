@@ -9,55 +9,42 @@ barcode_stats <- data
 
 guides <- fread("oligo_guides.tsv")
 
-
-# Select unique promoter names from the 'barcode_stats' data frame
-promoters <- unique(barcode_stats$promoter)
-
-# Sort the list of promoter names by placing 'j23119' and 'lacUV5' at the beginning
-# and sorting the rest of the names in alphabetical order
-promoters <- c("j23119", "lacUV5", sort(setdiff(promoters, c("j23119", "lacUV5"))))
-# 
-# data_summarize <- data %>% mutate(promoter = factor(promoter, levels = promoters)) %>% group_by(promoter, spacer, nucleotide, batch, timing) %>% summarise(count = sum(count))
-# 
-# data_summarize <- data_summarize %>% data.table
-# 
-# data_summarize[, batch := paste(timing, batch, sep = "_")]
-# 
-# spacer_stats_spread <- data_summarize %>% data.table %>% dcast(spacer + nucleotide ~ batch + promoter, value.var = "count", fill = 0)
-# 
-# spacer_stats_spread %>% fwrite("spacer_stats_spread_full.tsv.gz", sep = "\t")
-
 spacer_stats_spread <- fread("spacer_stats_spread_full.tsv.gz")
-
 
 spread_data_columns <- spacer_stats_spread %>% 
   colnames %>% `[`(spacer_stats_spread %>% colnames %>% grepl("^T", .))
 
 
-design_promoters <- spread_data_columns %>% stringr::str_extract("[^_]+$")
-design_promoters <- gsub("j23119", "constitutive", design_promoters)
-design_promoters <- gsub("lacUV5", "constitutive", design_promoters)
+design_promoters <- spread_data_columns %>% 
+	stringr::str_extract("[^_]+$") %>% 
+	gsub("j23119|lacUV5", "constitutive", .) %>% 
+	factor(., levels = unique(.))
 
 
-design_timing <- spread_data_columns %>% stringr::str_extract("^T[02]")
+design_timing <- spread_data_columns %>% 
+	stringr::str_extract("^T[02]") %>% 
+	factor(., levels = unique(.))
 
 
 spread_data_design <- model.matrix( ~ design_timing + design_promoters) %>% 
-  set_colnames(c("intercept", (design_timing %>% unique)[-1], (design_promoters %>% unique)[-1])) %>%
+  set_colnames(c("intercept", levels(design_timing)[-1], levels(design_promoters)[-1])) %>%
   set_rownames(spread_data_columns)
 
+
 spread_data_block <- spread_data_columns %>% stringr::str_extract("(A|B|C|D)_[0-9]")
+
 
 spread_data_MPRAset <- MPRASet(
   RNA = filter(spacer_stats_spread, nucleotide == "RNA") %>% select(all_of(spread_data_columns)),
   DNA = filter(spacer_stats_spread, nucleotide == "DNA") %>% select(all_of(spread_data_columns)),
   eid = filter(spacer_stats_spread, nucleotide == "RNA") %>% mutate(spacer = as.character(spacer)) %>% pull(spacer))
 
+
 spread_data_mpralm <- mpralm(
   spread_data_MPRAset,
   design = spread_data_design,
   block = spread_data_block,
-  model_type = "corr_groups",
+  model_type = "indep_groups",
   aggregate = "none",
   plot = FALSE,
   normalize = TRUE)
@@ -71,7 +58,7 @@ results_LFC <- guides %>% select(spacer)
 ##########################################################################################
 
 rm(overall_results)
-predictors = c("intercept", "T2", design_promoters %>% unique %>% `[`(-1))
+predictors = c("intercept", c(levels(design_timing)[-1], levels(design_promoters)[-1]))
 
 for (i in predictors) {
   
@@ -102,4 +89,5 @@ overall_results_summary$predictor <- factor(overall_results_summary$predictor, l
 
 overall_results_mLFC <- overall_results_summary %>% data.table %>% dcast(gene + type ~ predictor, value.var = "mLFC")
 overall_results_FDR <- overall_results_summary %>% data.table %>% dcast(gene + type ~ predictor, value.var = "FDR")
+
 
