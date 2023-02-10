@@ -31,10 +31,10 @@ annotations$replicate <- factor(annotations$replicate)
 
 # Convert promoter names to "constitutive" for j23119 and lacUV5
 annotations$promoter <- gsub("j23119|lacUV5", "constitutive", annotations$promoter)
-annotations$promoter <- factor(annotations$promoter, levels = c("constitutive", unique(promoters)))
+annotations$promoter <- factor(annotations$promoter, levels = c("constitutive", sort(setdiff(promoters, c("j23119", "lacUV5")))))
 
 # Join spacers data with oligo guides
-spacers <- spacer_stats %>% ungroup %>% select(spacer) %>% unique() %>% inner_join(guides) 
+spacers <- spacer_stats %>% ungroup %>% select(spacer) %>% unique() %>% inner_join(guides)
 
 # Filter controls data
 controls <- spacers %>% data.table %>% `[`( , type == "controls")
