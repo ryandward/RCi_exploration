@@ -31,3 +31,7 @@ testLrt(abundant_rci_mpranalyze_intx_plus_comp) %>% arrange(fdr) %>%
 	filter(lrt_fdr < 0.05 & fdr < 0.05) %>% group_by(spacer) %>% 
 	filter(stat_pred == max(stat_pred)) %>% View
 
+#check guides 
+abundant_spacer_stats %>% group_by(timing, replicate, nucleotide, promoter) %>% mutate(count = 10^6*count/sum(count))  %>% data.table %>% inner_join(guides) %>% filter(spacer == "GTTCGATTGCCACCGCAATC") %>% dcast(gene + spacer + offset + nucleotide + timing ~ promoter + replicate, value.var = "count") %>% arrange(offset)
+
+

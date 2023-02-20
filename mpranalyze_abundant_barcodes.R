@@ -5,20 +5,29 @@ barcode_stats <- fread("barcode_stats_lane_agg.tsv.gz")
 
 low_counts <- c("mdtA", "ydiF")
 
-abundant_barcodes <- barcode_stats %>%
-	filter(nucleotide == "RNA") %>%
-	filter(!promoter %in% low_counts) %>%
-	group_by(promoter, nucleotide, timing, replicate) %>%
-	mutate(cpm = count/sum(count)*1e6) %>% 
-	filter(cpm > 5) %>% filter(n() >= 2)  %>% arrange(barcode, replicate, timing)
+# abundant_barcodes <- barcode_stats %>%
+# 	filter(nucleotide == "RNA") %>%
+# 	filter(!promoter %in% low_counts) %>%
+# 	group_by(promoter, nucleotide, timing, replicate) %>%
+# 	mutate(cpm = count/sum(count)*1e6) %>% 
+# 	filter(cpm > 5) %>% filter(n() >= 2)  %>% arrange(barcode, replicate, timing)
 
-abundant_barcode_stats <- barcode_stats %>% filter(barcode %in% abundant_barcodes$barcode)
+# fwrite(abundant_barcodes, "abundant_barcodes.tsv.gz", sep = "\t")
 
-abundant_spacer_stats <- abundant_barcode_stats %>% group_by(promoter, spacer, timing, replicate, nucleotide) %>% summarise(count = sum(count))
+abundant_barcodes <- fread("abundant_barcodes.tsv.gz")
 
-abundant_spacer_stats <- abundant_spacer_stats %>% 
-	mutate(annot = paste(timing, replicate, promoter, sep = ":")) %>% 
-	arrange(annot, spacer, nucleotide)
+# abundant_barcode_stats <- barcode_stats %>% filter(barcode %in% abundant_barcodes$barcode)
+# 
+# abundant_spacer_stats <- abundant_barcode_stats %>% group_by(promoter, spacer, timing, replicate, nucleotide) %>% summarise(count = sum(count))
+
+# abundant_spacer_stats <- abundant_spacer_stats %>% 
+# 	mutate(annot = paste(timing, replicate, promoter, sep = ":")) %>% 
+# 	arrange(annot, spacer, nucleotide)
+# 
+# fwrite(abundant_spacer_stats, "abundant_spacer_stats.tsv.gz", sep = "\t")
+
+abundant_spacer_stats <- fread("abundant_spacer_stats.tsv.gz")
+
 
 # Read oligo guides data
 guides <- fread("oligo_guides.tsv")
