@@ -22,11 +22,18 @@ for line1, line2, line3 in zip(f1, f2, f3):
 
 We use an FDR-based approach to determine the minimum count \(N\) for considering a barcode as real. The expected number of false positives is calculated based on the sgRNA error rate.
 
-### Formula for Expected False Positives
+$$
+\text{Expected False Positives} = M \times \text{sgRNA error rate}^N
+$$
 
-Expected False Positives: 
-$M \times \text{sgRNA error rate}^N$
-$(M)$
+Where:
+* $M$ is the total number of unique barcodes
+* $N$ is the count threshold for considering a barcode as real
+
+$$
+\text{sgRNA Error Rate} = \frac{\text{Number of off-target sgRNA reads}}{\text{Total number of reads} - \text{Number of dark oligos}}
+$$
+
 
 ```python
 def calculate_min_count(FDR_target, sgRNA_error_rate, barcode_to_promoter_oligo):
