@@ -35,7 +35,7 @@ $$
 The expected number of false positives is given by:
 
 $$
-\text{Expected False Positives} = M \times \text{sgRNA error rate}^N
+\text{expected false positives} = M \times \text{sgRNA error rate}^N
 $$
 
 Where:
@@ -48,12 +48,12 @@ For the calculation of actual positives, we count the number of unique barcodes 
 
 Actual Positives = Number of unique barcodes where the count is greater than or equal to `N`
 
-### sgRNA Error Rate
+### sgRNA error rate
 
 The sgRNA error rate is determined as:
 
 $$
-\text{sgRNA Error Rate} = \frac{\text{Number of off-target sgRNA reads}}{\text{Total number of reads} - \text{Number of dark oligos}}
+\text{sgRNA error rate} = \frac{\text{number of off-target sgRNA reads}}{\text{total number of reads} - \text{count of dark (poly-G) oligos}}
 $$
 
 
