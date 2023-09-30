@@ -9,7 +9,7 @@
 
 ## Data Collection
 
-The data collection process uses gzipped FASTQ files for each lane. The reads are filtered in real-time to exclude 'dark' promoters, barcodes, and oligos (those comprising a single nucleotide type, e.g., all 'G'). Counts are incremented for each unique combination of promoter, barcode, and oligo.
+The data collection process uses gzipped FASTQ files for each lane. The reads are filtered in real-time to exclude 'dark' promoters, barcodes, and oligos (those comprising a tracks of 'G'). Counts are incremented for each unique combination of promoter, barcode, and oligo.
 
 ```python
 for line1, line2, line3 in zip(f1, f2, f3):
