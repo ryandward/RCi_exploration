@@ -20,19 +20,42 @@ for line1, line2, line3 in zip(f1, f2, f3):
 
 ## Threshold Determination Using FDR
 
-We use an FDR-based approach to determine the minimum count \(N\) for considering a barcode as real. The expected number of false positives is calculated based on the sgRNA error rate.
+We employ a Bayesian FDR-based approach to determine the minimum count `N` for considering a barcode as valid. We estimate the expected number of false positives based on the sgRNA error rate and iteratively adjust `N` until the False Discovery Rate (FDR) falls below our target threshold.
+
+### False Discovery Rate (FDR)
+
+The False Discovery Rate (FDR) is calculated as:
+
+$$
+FDR = \frac{\text{expected false positives}}{\text{actual positives}}
+$$
+
+### Expected False Positives
+
+The expected number of false positives is given by:
 
 $$
 \text{Expected False Positives} = M \times \text{sgRNA error rate}^N
 $$
 
 Where:
-* $M$ is the total number of unique barcodes
-* $N$ is the count threshold for considering a barcode as real
+* `M` represents the total number of unique barcodes.
+* `N` is the count threshold for considering a barcode as real.
+
+### Actual Positives
+
+For the calculation of actual positives, we count the number of unique barcodes that meet or exceed the count threshold `N`. In other words:
+
+Actual Positives = Number of unique barcodes where the count is greater than or equal to `N`
+
+### sgRNA Error Rate
+
+The sgRNA error rate is determined as:
 
 $$
 \text{sgRNA Error Rate} = \frac{\text{Number of off-target sgRNA reads}}{\text{Total number of reads} - \text{Number of dark oligos}}
 $$
+
 
 
 ```python
